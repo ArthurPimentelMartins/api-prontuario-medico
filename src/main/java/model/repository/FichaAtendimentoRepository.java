@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface FichaAtendimentoEntity extends JpaRepository<FichaAtendimento, Long> {
+public interface FichaAtendimentoRepository extends JpaRepository<FichaAtendimento, Long> {
     List<FichaAtendimento> findByIdentificacao(String identificacao);
 }
