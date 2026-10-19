@@ -1,4 +1,4 @@
-package model.entity;
+package com.prontuario.api.model.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
