@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Prontuário Médico Digital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .ficha-card { border-left: 5px solid #0d6efd; margin-bottom: 15px; }
+        .header-app { background: #0d6efd; color: white; padding: 15px; border-radius: 0 0 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(13,110,253,0.2); }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid pb-5">
+    <div class="header-app text-center">
+        <h4 class="m-0">Prontuário Médico - Triagem</h4>
+    </div>
+
+    <!-- Formulário -->
+    <div class="card p-4">
+        <h5 class="mb-3">Nova Ficha</h5>
+        <form id="fichaForm">
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-bold">Identificação / Paciente</label>
+                <input type="text" class="form-control" id="identificacao" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label text-muted small fw-bold">Pressão (PA)</label>
+                    <input type="text" class="form-control" id="pa" placeholder="120x80" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label text-muted small fw-bold">Freq. Cardíaca (FC)</label>
+                    <input type="number" class="form-control" id="fc" placeholder="bpm" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label text-muted small fw-bold">Temperatura (°C)</label>
+                    <input type="number" step="0.1" class="form-control" id="temperatura" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label text-muted small fw-bold">Saturação (O2)</label>
+                    <input type="text" class="form-control" id="o2" placeholder="98%" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-bold">Mecanismo da Lesão</label>
+                <input type="text" class="form-control" id="mecanismoLesao">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-bold">Principais Lesões</label>
+                <input type="text" class="form-control" id="principaisLesoes">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-bold">Medicações / Intervenções</label>
+                <textarea class="form-control" id="medicacoes" rows="2"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="btnSalvar">Salvar Prontuário</button>
+        </form>
+    </div>
+
+    <!-- Lista de Fichas (Mobile First: Cards ao invés de Tabelas) -->
+    <h5 class="mb-3 text-secondary px-2">Registros Recentes</h5>
+    <div id="listaFichas">
+        <!-- Preenchido via JS -->
+    </div>
+</div>
+
+<script>
+    // URL da sua API. Quando formos hospedar, trocaremos o localhost pelo link gerado pelo Ngrok/Cloudflare.
+    const API_URL = 'http://localhost:8080/api/fichas';
+
+    async function carregarFichas() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error("Erro na rede");
+            const fichas = await response.json();
+
+            const lista = document.getElementById('listaFichas');
+            lista.innerHTML = fichas.reverse().map(f => `
+                <div class="card p-3 ficha-card">
+                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                        <strong class="text-dark">ID #${f.id} - ${f.identificacao}</strong>
+                        <span class="badge bg-primary rounded-pill">Temp: ${f.temperatura}°C</span>
+                    </div>
+                    <div class="row text-muted small">
+                        <div class="col-6"><strong>PA:</strong> ${f.pa}</div>
+                        <div class="col-6"><strong>FC:</strong> ${f.fc} bpm</div>
+                        <div class="col-6 mt-1"><strong>O2:</strong> ${f.o2}</div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error("Erro ao buscar fichas:", error);
+            document.getElementById('listaFichas').innerHTML = '<div class="alert alert-danger">Falha ao conectar com o servidor.</div>';
+        }
+    }
+
+    document.getElementById('fichaForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnSalvar');
+        btn.disabled = true;
+        btn.innerHTML = 'Salvando...';
+
+        const payload = {
+            identificacao: document.getElementById('identificacao').value,
+            pa: document.getElementById('pa').value,
+            fc: Number(document.getElementById('fc').value),
+            temperatura: Number(document.getElementById('temperatura').value),
+            o2: document.getElementById('o2').value,
+            mecanismoLesao: document.getElementById('mecanismoLesao').value,
+            principaisLesoes: document.getElementById('principaisLesoes').value,
+            medicacoes: document.getElementById('medicacoes').value
+        };
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                document.getElementById('fichaForm').reset();
+                carregarFichas();
+            } else {
+                alert("Erro ao salvar a ficha. Verifique se a API está rodando.");
+            }
+        } catch (error) {
+            alert("Erro de conexão com o servidor.");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar Prontuário';
+        }
+    });
+
+    carregarFichas();
+</script>
+</body>
+</html>
