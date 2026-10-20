@@ -73,10 +73,10 @@ public class FichaService {
 
     @Transactional(readOnly = true)
     public FichaAtendimento buscarPorId(Long id) {
-        return repository .findById(id).
+        return repository.findById(id).
                 orElseThrow(() -> new ResourceNotFoundException(
                         "Ficha com id " + id + " não encontrada"
-        ));
+                ));
     }
 
     private void validarFicha(FichaAtendimento ficha) {

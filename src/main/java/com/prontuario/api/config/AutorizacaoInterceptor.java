@@ -14,7 +14,7 @@ public class AutorizacaoInterceptor implements HandlerInterceptor {
         HttpSession session = request.getSession(false);
 
         if (session != null && session.getAttribute("perfil") != null) {
-            return true; // Catraca liberada
+            return true;
         }
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
