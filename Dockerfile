@@ -1,13 +1,10 @@
-# Fase de compilação
-FROM eclipse-temurin:21-jdk-jammy AS build
+# Fase de compilação com Maven nativo
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-COPY mvnw .
-COPY .mvn .mvn
 COPY pom.xml .
-RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline
+RUN mvn dependency:go-offline
 COPY src src
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 # Fase de execução
 FROM eclipse-temurin:21-jre-jammy
