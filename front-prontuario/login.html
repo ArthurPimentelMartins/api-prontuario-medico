@@ -3,28 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Acesso - Prontuário</title>
+    <title>Acesso - Triagem</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #0f172a; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .card { background: #1e293b; border: 1px solid #334155; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 400px; padding: 2rem; margin: 20px; }
-        .logo-bg { background: #38bdf8; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 20px; }
-        label { color: #94a3b8; }
-        .form-control { background-color: #0f172a; border-color: #334155; color: white; text-align: center; letter-spacing: 5px; font-size: 1.5rem;}
-        .form-control:focus { background-color: #0f172a; color: white; border-color: #38bdf8; box-shadow: none; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 400px; padding: 2.5rem 2rem; margin: 20px; }
+        .logo-bg { background: #38bdf8; color: white; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin: 0 auto 20px; }
+        .form-control { background-color: #0f172a; border-color: #334155; color: #38bdf8; text-align: center; letter-spacing: 15px; font-size: 2rem; font-weight: bold; padding-left: 25px; }
+        .form-control:focus { background-color: #0f172a; color: #38bdf8; border-color: #38bdf8; box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25); }
+        .form-control::placeholder { color: #334155; letter-spacing: 15px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="logo-bg">🩺</div>
-    <h4 class="text-center text-white mb-4">Sistema de Triagem</h4>
+    <h4 class="text-center text-white mb-1">Prontuário Digital</h4>
+    <p class="text-center mb-4" style="color: #94a3b8; font-size: 0.9rem;">Identificação da Equipe</p>
+
     <form id="loginForm">
-        <div class="mb-4 text-center">
-            <label class="form-label small fw-bold">Insira o Código da Equipe</label>
-            <input type="password" id="codigo" class="form-control form-control-lg" placeholder="**" maxlength="2" required autocomplete="off">
+        <div class="mb-4">
+            <input type="password" id="codigo" class="form-control form-control-lg" placeholder="**" maxlength="2" required autocomplete="off" autofocus>
         </div>
-        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" style="background-color: #0284c7; border: none;">Acessar Prontuários</button>
+        <button type="submit" class="btn w-100 py-3 fw-bold text-white shadow-sm" style="background-color: #0284c7; border-radius: 8px;">ACESSAR SISTEMA</button>
     </form>
 </div>
 
@@ -34,7 +35,7 @@
         const codigoAcesso = document.getElementById('codigo').value;
         let grupo = null;
 
-        // Lógica espelhada do seu back-end
+        // Lógica IDÊNTICA ao switch do seu backend
         switch (codigoAcesso) {
             case "00": grupo = "Ambulância"; break;
             case "01": grupo = "Telefonista"; break;
@@ -46,10 +47,11 @@
         }
 
         if (grupo !== null) {
+            // Salva o nome do grupo mapeado e manda para a tela principal
             localStorage.setItem('grupoAtendimento', grupo);
-            window.location.href = 'index.html'; // Libera o acesso para a tela principal
+            window.location.href = 'index.html';
         } else {
-            alert('Acesso negado! Código de equipe inválido.');
+            alert('Acesso negado! Código de identificação inválido.');
             document.getElementById('codigo').value = '';
             document.getElementById('codigo').focus();
         }
