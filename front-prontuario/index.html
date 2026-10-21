@@ -9,14 +9,16 @@
         body { background-color: #f8f9fa; }
         .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .ficha-card { border-left: 5px solid #0d6efd; margin-bottom: 15px; }
-        .header-app { background: #0d6efd; color: white; padding: 15px; border-radius: 0 0 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(13,110,253,0.2); }
+        .header-app { background: #0d6efd; color: white; padding: 15px; border-radius: 0 0 15px 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(13,110,253,0.2); position: relative;}
     </style>
 </head>
 <body>
 
 <div class="container-fluid pb-5">
     <div class="header-app text-center">
-        <h4 class="m-0">Prontuário Médico - Triagem</h4>
+        <h4 class="m-0">Triagem</h4>
+        <div id="nomeGrupoLabel" class="mt-1 small fw-bold text-light"></div>
+        <button onclick="sair()" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-3">Sair</button>
     </div>
 
     <!-- Formulário -->
@@ -66,7 +68,7 @@
         </form>
     </div>
 
-    <!-- Lista de Fichas (Mobile First: Cards ao invés de Tabelas) -->
+    <!-- Lista de Fichas -->
     <h5 class="mb-3 text-secondary px-2">Registros Recentes</h5>
     <div id="listaFichas">
         <!-- Preenchido via JS -->
@@ -74,8 +76,21 @@
 </div>
 
 <script>
-    // URL da sua API. Quando formos hospedar, trocaremos o localhost pelo link gerado pelo Ngrok/Cloudflare.
-    const API_URL = 'http://localhost:8080/api/fichas';
+    // Bloqueio de segurança e identificação
+    const grupoLogado = localStorage.getItem('grupoAtendimento');
+    if (!grupoLogado) {
+        window.location.href = 'login.html';
+    } else {
+        document.getElementById('nomeGrupoLabel').innerText = `Equipe: ${grupoLogado}`;
+    }
+
+    function sair() {
+        localStorage.removeItem('grupoAtendimento');
+        window.location.href = 'login.html';
+    }
+
+    // URL da API no Render (Nuvem)
+    const API_URL = 'https://api-prontuario-medico.onrender.com/api/fichas';
 
     async function carregarFichas() {
         try {
@@ -88,18 +103,19 @@
                 <div class="card p-3 ficha-card">
                     <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
                         <strong class="text-dark">ID #${f.id} - ${f.identificacao}</strong>
-                        <span class="badge bg-primary rounded-pill">Temp: ${f.temperatura}°C</span>
+                        <span class="badge bg-secondary">${f.grupoResponsavel || 'Geral'}</span>
                     </div>
                     <div class="row text-muted small">
                         <div class="col-6"><strong>PA:</strong> ${f.pa}</div>
                         <div class="col-6"><strong>FC:</strong> ${f.fc} bpm</div>
+                        <div class="col-6 mt-1"><strong>Temp:</strong> ${f.temperatura}°C</div>
                         <div class="col-6 mt-1"><strong>O2:</strong> ${f.o2}</div>
                     </div>
                 </div>
             `).join('');
         } catch (error) {
             console.error("Erro ao buscar fichas:", error);
-            document.getElementById('listaFichas').innerHTML = '<div class="alert alert-danger">Falha ao conectar com o servidor.</div>';
+            document.getElementById('listaFichas').innerHTML = '<div class="alert alert-danger">Falha ao conectar com o servidor. A API pode estar hibernando, aguarde 30s e recarregue.</div>';
         }
     }
 
@@ -117,7 +133,8 @@
             o2: document.getElementById('o2').value,
             mecanismoLesao: document.getElementById('mecanismoLesao').value,
             principaisLesoes: document.getElementById('principaisLesoes').value,
-            medicacoes: document.getElementById('medicacoes').value
+            medicacoes: document.getElementById('medicacoes').value,
+            grupoResponsavel: grupoLogado // Agora o grupo vai pro banco!
         };
 
         try {

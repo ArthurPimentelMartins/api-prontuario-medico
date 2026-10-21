@@ -10,8 +10,8 @@
         .card { background: #1e293b; border: 1px solid #334155; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 400px; padding: 2rem; margin: 20px; }
         .logo-bg { background: #38bdf8; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 20px; }
         label { color: #94a3b8; }
-        .form-control, .form-select { background-color: #0f172a; border-color: #334155; color: white; }
-        .form-control:focus, .form-select:focus { background-color: #0f172a; color: white; border-color: #38bdf8; box-shadow: none; }
+        .form-control { background-color: #0f172a; border-color: #334155; color: white; text-align: center; letter-spacing: 5px; font-size: 1.5rem;}
+        .form-control:focus { background-color: #0f172a; color: white; border-color: #38bdf8; box-shadow: none; }
     </style>
 </head>
 <body>
@@ -20,19 +20,9 @@
     <div class="logo-bg">🩺</div>
     <h4 class="text-center text-white mb-4">Sistema de Triagem</h4>
     <form id="loginForm">
-        <div class="mb-3">
-            <label class="form-label small fw-bold">Equipe de Atendimento</label>
-            <select id="grupo" class="form-select form-control-lg" required>
-                <option value="" disabled selected>Selecione sua equipe...</option>
-                <option value="Grupo 1">Grupo 1</option>
-                <option value="Grupo 2">Grupo 2</option>
-                <option value="Grupo 3">Grupo 3</option>
-                <option value="Resgate Móvel">Resgate Móvel</option>
-            </select>
-        </div>
-        <div class="mb-4">
-            <label class="form-label small fw-bold">Código de Acesso</label>
-            <input type="password" id="senha" class="form-control form-control-lg" placeholder="Digite a senha" required>
+        <div class="mb-4 text-center">
+            <label class="form-label small fw-bold">Insira o Código da Equipe</label>
+            <input type="password" id="codigo" class="form-control form-control-lg" placeholder="**" maxlength="2" required autocomplete="off">
         </div>
         <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" style="background-color: #0284c7; border: none;">Acessar Prontuários</button>
     </form>
@@ -41,15 +31,27 @@
 <script>
     document.getElementById('loginForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        const grupo = document.getElementById('grupo').value;
-        const senha = document.getElementById('senha').value;
+        const codigoAcesso = document.getElementById('codigo').value;
+        let grupo = null;
 
-        // Senha padrão para o seu projeto prático
-        if (senha === '1234') {
+        // Lógica espelhada do seu back-end
+        switch (codigoAcesso) {
+            case "00": grupo = "Ambulância"; break;
+            case "01": grupo = "Telefonista"; break;
+            case "02": grupo = "Triagem"; break;
+            case "03": grupo = "UPA"; break;
+            case "04": grupo = "Regional"; break;
+            case "05": grupo = "Santa Casa"; break;
+            default: grupo = null;
+        }
+
+        if (grupo !== null) {
             localStorage.setItem('grupoAtendimento', grupo);
             window.location.href = 'index.html'; // Libera o acesso para a tela principal
         } else {
-            alert('Acesso negado! Senha incorreta.');
+            alert('Acesso negado! Código de equipe inválido.');
+            document.getElementById('codigo').value = '';
+            document.getElementById('codigo').focus();
         }
     });
 </script>
