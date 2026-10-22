@@ -18,7 +18,7 @@
     <div class="header-app text-center">
         <h4 class="m-0">Triagem</h4>
         <div id="nomeGrupoLabel" class="mt-1 small fw-bold text-light"></div>
-        <button onclick="sair()" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-3">Sair</button>
+        <button id="btnSair" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-3">Sair</button>
     </div>
 
     <!-- Formulário -->
@@ -75,41 +75,73 @@
     </div>
 </div>
 
+<!-- Modal de Detalhes -->
+<div class="modal fade" id="detalhesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Detalhes do Prontuário</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalDetalhesBody">
+                <!-- Preenchido via JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-success" id="btnImprimirPdf">📄 Salvar em PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS para o funcionamento do Modal -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-    // Bloqueio de segurança e identificação
     const grupoLogado = localStorage.getItem('grupoAtendimento');
     if (!grupoLogado) {
-        window.location.href = 'login.html';
+        window.location.replace('login.html');
     } else {
         document.getElementById('nomeGrupoLabel').innerText = `Equipe: ${grupoLogado}`;
     }
 
-    function sair() {
+    // Amarra a função de apagar a memória diretamente ao clique do botão
+    document.getElementById('btnSair').addEventListener('click', () => {
         localStorage.removeItem('grupoAtendimento');
-        window.location.href = 'login.html';
-    }
+        window.location.replace('login.html');
+    });
 
-    // URL da API no Render (Nuvem)
-    const API_URL = 'https://seu-link-aqui.ngrok-free.dev/api/fichas';
+    // URL da API
+    const API_URL = 'https://celery-hash-retired.ngrok-free.dev/api/fichas';
+    let fichasEmMemoria = []; // Guarda as fichas para exibir os detalhes sem precisar ir no banco de novo
+    let fichaAtualModal = null;
 
     async function carregarFichas() {
         try {
-            const response = await fetch(API_URL);
+            const response = await fetch(API_URL, {
+                headers: { 'ngrok-skip-browser-warning': 'true' }
+            });
             if (!response.ok) throw new Error("Erro na rede");
-            const fichas = await response.json();
 
+            const fichas = await response.json();
+            fichasEmMemoria = fichas; // Salva em memória
             const lista = document.getElementById('listaFichas');
+
             lista.innerHTML = fichas.reverse().map(f => `
                 <div class="card p-3 ficha-card">
                     <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                        <strong class="text-dark">ID #${f.id} - ${f.identificacao}</strong>
+                        <strong class="text-dark">ID #${f.id} -${f.identificacao}</strong>
                         <span class="badge bg-secondary">${f.grupoResponsavel || 'Geral'}</span>
                     </div>
-                    <div class="row text-muted small">
+                    <div class="row text-muted small mb-2">
                         <div class="col-6"><strong>PA:</strong> ${f.pa}</div>
                         <div class="col-6"><strong>FC:</strong> ${f.fc} bpm</div>
                         <div class="col-6 mt-1"><strong>Temp:</strong> ${f.temperatura}°C</div>
                         <div class="col-6 mt-1"><strong>O2:</strong> ${f.o2}</div>
+                    </div>
+                    <div class="d-flex justify-content-end border-top pt-2">
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="abrirDetalhes(${f.id})">👁️ Detalhes</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="apagarFicha(${f.id})">🗑️ Apagar</button>
                     </div>
                 </div>
             `).join('');
@@ -119,46 +151,101 @@
         }
     }
 
-    document.getElementById('fichaForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btnSalvar');
-        btn.disabled = true;
-        btn.innerHTML = 'Salvando...';
-
-        const payload = {
-            identificacao: document.getElementById('identificacao').value,
-            pa: document.getElementById('pa').value,
-            fc: Number(document.getElementById('fc').value),
-            temperatura: Number(document.getElementById('temperatura').value),
-            o2: document.getElementById('o2').value,
-            mecanismoLesao: document.getElementById('mecanismoLesao').value,
-            principaisLesoes: document.getElementById('principaisLesoes').value,
-            medicacoes: document.getElementById('medicacoes').value,
-            grupoResponsavel: grupoLogado // Agora o grupo vai pro banco!
-        };
+    // Função para APAGAR o prontuário
+    async function apagarFicha(id) {
+        if (!confirm("Tem certeza que deseja apagar este prontuário permanentemente?")) return;
 
         try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE',
+                headers: { 'ngrok-skip-browser-warning': 'true' }
             });
 
             if (response.ok) {
-                document.getElementById('fichaForm').reset();
-                carregarFichas();
+                carregarFichas(); // Recarrega a lista após excluir
             } else {
-                alert("Erro ao salvar a ficha. Verifique se a API está rodando.");
+                alert("Erro ao excluir a ficha. Verifique o servidor.");
             }
         } catch (error) {
-            alert("Erro de conexão com o servidor.");
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Salvar Prontuário';
+            alert("Erro de conexão ao tentar excluir.");
         }
-    });
+    }
 
-    carregarFichas();
-</script>
-</body>
-</html>
+    // Função para ABRIR O MODAL com detalhes
+    function abrirDetalhes(id) {
+        fichaAtualModal = fichasEmMemoria.find(f => f.id === id);
+        if (!fichaAtualModal) return;
+
+        const htmlDetalhes = `
+            <div class="mb-3 border-bottom pb-2">
+                <h6 class="text-primary mb-1">Identificação do Paciente</h6>
+                <p class="mb-0 fs-5">${fichaAtualModal.identificacao}</p>
+                <small class="text-muted">Equipe de Triagem: ${fichaAtualModal.grupoResponsavel}</small>
+            </div>
+            <div class="row mb-3 border-bottom pb-2">
+                <h6 class="text-primary mb-2">Sinais Vitais</h6>
+                <div class="col-6 col-md-3"><strong>PA:</strong> <br>${fichaAtualModal.pa}</div>
+                <div class="col-6 col-md-3"><strong>FC:</strong> <br>${fichaAtualModal.fc} bpm</div>
+                <div class="col-6 col-md-3 mt-2 mt-md-0"><strong>Temp:</strong> <br>${fichaAtualModal.temperatura}°C</div>
+                <div class="col-6 col-md-3 mt-2 mt-md-0"><strong>Sat O2:</strong> <br>${fichaAtualModal.o2}</div>
+            </div>
+            <div class="mb-3 border-bottom pb-2">
+                <h6 class="text-primary mb-1">Mecanismo da Lesão</h6>
+                <p class="mb-0">${fichaAtualModal.mecanismoLesao || 'Não informado'}</p>
+            </div>
+            <div class="mb-3 border-bottom pb-2">
+                <h6 class="text-primary mb-1">Principais Lesões</h6>
+                <p class="mb-0">${fichaAtualModal.principaisLesoes || 'Não informado'}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-primary mb-1">Medicações e Intervenções</h6>
+                <p class="mb-0">${fichaAtualModal.medicacoes || 'Não informado'}</p>
+            </div>
+        `;
+
+        document.getElementById('modalDetalhesBody').innerHTML = htmlDetalhes;
+        const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
+        modal.show();
+    }
+
+    // Função para GERAR PDF e Imprimir
+    document.getElementById('btnImprimirPdf').addEventListener('click', () => {
+        if (!fichaAtualModal) return;
+
+        // Abre uma nova aba com um HTML limpo próprio para impressão
+        const janelaPdf = window.open('', '', 'width=800,height=900');
+        janelaPdf.document.write(`
+            <html>
+                <head>
+                    <title>Prontuário_ID_${fichaAtualModal.id}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+                        h2 { text-align: center; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
+                        .info-group { margin-bottom: 20px; }
+                        .label { font-weight: bold; color: #555; font-size: 14px; }
+                        .value { font-size: 18px; display: block; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; background: #f9f9f9; }
+                        .row { display: flex; justify-content: space-between; gap: 20px; }
+                        .col { flex: 1; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Ficha de Atendimento Pré-Hospitalar (ID: ${fichaAtualModal.id})</h2>
+                    <div class="info-group">
+                        <span class="label">Paciente:</span>
+                        <span class="value">${fichaAtualModal.identificacao}</span>
+                        <span class="label">Equipe Responsável:</span>
+                        <span class="value">${fichaAtualModal.grupoResponsavel}</span>
+                    </div>
+
+                    <div class="row info-group">
+                        <div class="col"><span class="label">Pressão (PA):</span><span class="value">${fichaAtualModal.pa}</span></div>
+                        <div class="col"><span class="label">Frequência Cardíaca (FC):</span><span class="value">${fichaAtualModal.fc} bpm</span></div>
+                        <div class="col"><span class="label">Temperatura:</span><span class="value">${fichaAtualModal.temperatura}°C</span></div>
+                        <div class="col"><span class="label">Saturação O2:</span><span class="value">${fichaAtualModal.o2}</span></div>
+                    </div>
+
+                    <div class="info-group">
+                        <span class="label">Mecanismo da Lesão:</span>
+                        <span class="value">${fichaAtualModal.mecanismoLesao || 'N/A'}</span>
+                    </div>
+                    <div class="info-group">
