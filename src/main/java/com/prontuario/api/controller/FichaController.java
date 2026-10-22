@@ -1,7 +1,5 @@
 package com.prontuario.api.controller;
 
-
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import com.prontuario.api.model.dto.FichaRequestDTO;
 import com.prontuario.api.model.entity.FichaAtendimento;
@@ -13,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/fichas")
+@CrossOrigin(origins = "*")
 public class FichaController {
 
     private final FichaService service;
@@ -27,13 +26,9 @@ public class FichaController {
     }
 
     @PostMapping
-    public FichaAtendimento salvar(@Valid @RequestBody FichaRequestDTO dto, HttpSession session) {
-        String grupoLogado = (String) session.getAttribute("perfil");
-
-        if (grupoLogado == null) {
-            grupoLogado = "DESCONHECIDO";
-        }
-        return service.salvarFicha(dto, grupoLogado);
+    public FichaAtendimento salvar(@Valid @RequestBody FichaRequestDTO dto) {
+        String grupo = dto.grupoResponsavel() != null ? dto.grupoResponsavel() : "DESCONHECIDO";
+        return service.salvarFicha(dto, grupo);
     }
 
     @PutMapping("/{id}")

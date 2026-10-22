@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public record FichaRequestDTO(
         String identificacao,
+        String grupoResponsavel,
         String pa,
         Integer fc,
         BigDecimal temperatura,
@@ -13,5 +14,4 @@ public record FichaRequestDTO(
         String evolucaoTransporte,
         String intervencoesRealizadas,
         String medicacoes
-) {
-}
+) {}

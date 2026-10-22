@@ -12,16 +12,5 @@ public class WebConfig implements WebMvcConfigurer {
     public WebConfig(AutorizacaoInterceptor autorizacaoInterceptor) {
         this.autorizacaoInterceptor = autorizacaoInterceptor;
     }
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(autorizacaoInterceptor)
-                .addPathPatterns("/api/fichas/**")
-                .excludePathPatterns(
-                        "/api/login",
-                        "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html"
-                );
-    }
+    
 }
