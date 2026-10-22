@@ -81,5 +81,22 @@ public class FichaService {
 
     private void validarFicha(FichaAtendimento ficha) {
 
+        if (ficha.getIdentificacao() == null || ficha.getIdentificacao().trim().isEmpty()) {
+            throw new IllegalArgumentException("A identificação do paciente é obrigatória.");
+        }
+
+        if (ficha.getPa() == null || ficha.getPa().trim().isEmpty()) {
+            throw new IllegalArgumentException("A pressão arterial (PA) é obrigatória.");
+        }
+
+        if (ficha.getFc() == null || ficha.getFc() <= 0 || ficha.getFc() > 300) {
+            throw new IllegalArgumentException("Frequência cardíaca (FC) inválida. Insira um valor maior que 0 e menor que 300 bpm.");
+        }
+
+        if (ficha.getTemperatura() == null ||
+                ficha.getTemperatura().doubleValue() < 20.0 ||
+                ficha.getTemperatura().doubleValue() > 45.0) {
+            throw new IllegalArgumentException("Temperatura corporal inválida. O valor deve estar entre 20°C e 45°C.");
+        }
     }
 }
